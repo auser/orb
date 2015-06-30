@@ -21,6 +21,39 @@ var HeaderType = module.exports.HeaderType = {
     WRAPPER: 6,
     SUB_TOTAL: 7,
     GRAND_TOTAL: 8,
+    getTypeName: function(headerType) {
+        var name;
+        switch (headerType) {
+            case HeaderType.EMPTY:
+                name = 'empty';
+                break;
+            case HeaderType.DATA_HEADER:
+                name = 'dataHeader'
+                break;
+            case HeaderType.DATA_VALUE:
+                name = 'dataValue';
+                break;
+            case HeaderType.FIELD_BUTTON:
+                name = 'fieldButton';
+                break;
+            case HeaderType.INNER:
+                name = 'inner';
+                break;
+            case HeaderType.WRAPPER:
+                name = 'wrapper';
+                break;
+            case HeaderType.SUB_TOTAL:
+                name = 'subTotal';
+                break;
+            case HeaderType.GRAND_TOTAL:
+                name = 'grandTotal';
+                break;
+            default:
+                name = 'other';
+                break;
+        }
+        return name;
+    },
     getHeaderClass: function(headerType, axetype) {
         var cssclass = axetype === axe.Type.ROWS ? 'header-row' : (axetype === axe.Type.COLUMNS ? 'header-col' : '');
         switch (headerType) {
@@ -81,6 +114,11 @@ function CellBase(options) {
      * @type {HeaderType}
      */
     this.type = options.type;
+    /**
+     * cell type string
+     * @type {String}
+     */
+    this.typeStr = HeaderType.getTypeName(options.type);
     /**
      * header cell template
      * @type {String}

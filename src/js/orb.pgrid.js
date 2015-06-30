@@ -91,6 +91,10 @@ module.exports = function(config) {
         refresh();
     };
 
+    this.getInteractions = function(type) {
+        return self.config.getInteractions(type) || {};
+    }
+
     this.getFieldValues = function(field, filterFunc) {
         var values1 = [];
         var values = [];

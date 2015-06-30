@@ -1,10 +1,10 @@
 /**
- * orb v1.0.9, Pivot grid javascript library.
+ * orb v1.0.9, Pivot table javascript library.
  *
  * Copyright (c) 2014-2015 Najmeddine Nouri <devnajm@gmail.com>.
  *
  * @version v1.0.9
- * @link http://nnajm.github.io/orb/
+ * @link http://orbjs.net/
  * @license MIT
  */
 
@@ -626,6 +626,10 @@
                     return null;
                 };
 
+                this.getInteractions = function(cellType) {
+                    return config.interactions ? config.interactions[cellType] : {};
+                };
+
                 this.getPreFilters = function() {
                     var prefilters = {};
                     if (config.preFilters) {
@@ -1201,6 +1205,10 @@
                     self.config.dataSource = data;
                     refresh();
                 };
+
+                this.getInteractions = function(type) {
+                    return self.config.getInteractions(type) || {};
+                }
 
                 this.getFieldValues = function(field, filterFunc) {
                     var values1 = [];
@@ -2190,6 +2198,39 @@
                 WRAPPER: 6,
                 SUB_TOTAL: 7,
                 GRAND_TOTAL: 8,
+                getTypeName: function(headerType) {
+                    var name;
+                    switch (headerType) {
+                        case HeaderType.EMPTY:
+                            name = 'empty';
+                            break;
+                        case HeaderType.DATA_HEADER:
+                            name = 'dataHeader'
+                            break;
+                        case HeaderType.DATA_VALUE:
+                            name = 'dataValue';
+                            break;
+                        case HeaderType.FIELD_BUTTON:
+                            name = 'fieldButton';
+                            break;
+                        case HeaderType.INNER:
+                            name = 'inner';
+                            break;
+                        case HeaderType.WRAPPER:
+                            name = 'wrapper';
+                            break;
+                        case HeaderType.SUB_TOTAL:
+                            name = 'subTotal';
+                            break;
+                        case HeaderType.GRAND_TOTAL:
+                            name = 'grandTotal';
+                            break;
+                        default:
+                            name = 'other';
+                            break;
+                    }
+                    return name;
+                },
                 getHeaderClass: function(headerType, axetype) {
                     var cssclass = axetype === axe.Type.ROWS ? 'header-row' : (axetype === axe.Type.COLUMNS ? 'header-col' : '');
                     switch (headerType) {
@@ -2244,6 +2285,8 @@
                 this.axetype = options.axetype;
 
                 this.type = options.type;
+
+                this.typeStr = HeaderType.getTypeName(options.type);
 
                 this.template = options.template;
 
@@ -3128,7 +3171,6 @@
                     nodes.rowHeadersTable.size = reactUtils.getSize(nodes.rowHeadersTable.node);
 
                     // get row buttons container width
-                    //nodes.rowButtonsContainer.node.style.width = '';
                     var rowButtonsContainerWidth = reactUtils.getSize(nodes.rowButtonsContainer.node.children[0]).width;
 
                     // get array of dataCellsTable column widths
@@ -3154,9 +3196,6 @@
                         nodes.rowHeadersTable.size.width += rowDiff;
                         nodes.rowHeadersTable.widthArray[nodes.rowHeadersTable.widthArray.length - 1] += rowDiff;
                     }
-
-                    //nodes.rowButtonsContainer.node.style.width = (rowHeadersTableWidth + 1) + 'px';
-                    //nodes.rowButtonsContainer.node.style.paddingRight = (rowHeadersTableWidth + 1 - rowButtonsContainerWidth + 17) + 'px';
 
                     // Set dataCellsTable cells widths according to the computed dataCellsTableMaxWidthArray
                     reactUtils.updateTableColGroup(nodes.dataCellsTable.node, dataCellsTableMaxWidthArray);
@@ -3537,7 +3576,6 @@
                 }
             }
 
-
             module.exports.PivotRow = react.createClass({
                 render: function() {
                     var self = this;
@@ -3605,12 +3643,31 @@
             var _paddingLeft = null;
             var _borderLeft = null;
 
+            var interactionMap = {
+                'onHover': ['mouseenter', 'mouseleave']
+            }
+
             module.exports.PivotCell = react.createClass({
                 expand: function() {
                     this.props.pivotTableComp.expandRow(this.props.cell);
                 },
                 collapse: function() {
                     this.props.pivotTableComp.collapseRow(this.props.cell);
+                },
+                getCellInteractionEventNames: function() {
+                    var pgrid = this.props.pivotTableComp.pgrid,
+                        interactions = pgrid.getInteractions(this.props.cell.typeStr);
+
+                    var names = [];
+                    for (var key in interactions) {
+                        var fn = interactions[key];
+                        var eventNames = interactionMap[key];
+                        for (var idx in eventNames) {
+                            var evtName = eventNames[idx];
+                            names.push([evtName, fn]);
+                        }
+                    }
+                    return names;
                 },
                 updateCellInfos: function() {
                     var node = this.getDOMNode();
@@ -3661,8 +3718,41 @@
                         node.__orb._borderRightWidth = 0;
                     }
                 },
+                handleInteraction: function(fn) {
+                    var cell = this.props.cell;
+
+                    return function(evt) {
+                        fn.bind(cell, evt);
+                    }
+                },
                 componentDidMount: function() {
                     this.updateCellInfos();
+
+                    // Support interactions
+                    var pgrid = this.props.pivotTableComp.pgrid,
+                        interactions = pgrid.getInteractions(this.props.cell.typeStr);
+
+                    var el = this.getDOMNode();
+
+                    if (interactions.onInit)
+                        interactions.onInit.call(this, el, this.props.cell);
+
+                    var interactionNames = this.getCellInteractionEventNames();
+
+                    for (var evtIdx in interactionNames) {
+                        var evt = interactionNames[evtIdx];
+                        el.addEventListener(evt[0], this.handleInteraction(evt[1]), false);
+                    }
+                },
+                componentWillUnmount: function() {
+                    var el = this.getDOMNode();
+
+                    // Remove interactions
+                    var interactionNames = this.getCellInteractionEventNames();
+                    for (var evtIdx in interactionNames) {
+                        var evt = interactionNames[evtIdx];
+                        el.removeEventListener(evt[0], this.handleInteraction(evt[1]), false);
+                    }
                 },
                 componentDidUpdate: function() {
                     this.updateCellInfos();
@@ -3794,8 +3884,6 @@
 
                 return classname;
             }
-
-
 
             var dragManager = module.exports.DragManager = (function() {
 

@@ -139,6 +139,16 @@
         rows    : [ 'Manufacturer'],//, 'Category' ],
         columns : [ 'Class', 'Category' ],
         data    : [ 'Quantity', 'Amount' ],
+        interactions: {
+            dataValue: {
+                onInit: function(elem, cell) {
+                    console.log('onInit ->', elem, cell);
+                },
+                onHover: function(cell, index) {
+                    console.log('onHover ->', cell, index);
+                }
+            }
+        }
         /*preFilters : {
             'Class': { 'Matches': 'Regular' },
             'Manufacturer': { 'Matches': /^a|^c/ },

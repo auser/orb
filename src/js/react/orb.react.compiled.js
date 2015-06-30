@@ -186,7 +186,6 @@ module.exports.PivotTable = react.createClass({
         nodes.rowHeadersTable.size = reactUtils.getSize(nodes.rowHeadersTable.node);
 
         // get row buttons container width
-        //nodes.rowButtonsContainer.node.style.width = '';
         var rowButtonsContainerWidth = reactUtils.getSize(nodes.rowButtonsContainer.node.children[0]).width;
 
         // get array of dataCellsTable column widths
@@ -212,9 +211,6 @@ module.exports.PivotTable = react.createClass({
             nodes.rowHeadersTable.size.width += rowDiff;
             nodes.rowHeadersTable.widthArray[nodes.rowHeadersTable.widthArray.length - 1] += rowDiff;
         }
-
-        //nodes.rowButtonsContainer.node.style.width = (rowHeadersTableWidth + 1) + 'px';
-        //nodes.rowButtonsContainer.node.style.paddingRight = (rowHeadersTableWidth + 1 - rowButtonsContainerWidth + 17) + 'px';
 
         // Set dataCellsTable cells widths according to the computed dataCellsTableMaxWidthArray
         reactUtils.updateTableColGroup(nodes.dataCellsTable.node, dataCellsTableMaxWidthArray);
@@ -598,17 +594,17 @@ function setTableWidths(tblObject, newWidthArray) {
 }
 
 function clearTableWidths(tbl) {
-        if (tbl) {
-            for (var rowIndex = 0; rowIndex < tbl.rows.length; rowIndex++) {
-                var row = tbl.rows[rowIndex];
-                for (var cellIndex = 0; cellIndex < row.cells.length; cellIndex++) {
-                    row.cells[cellIndex].children[0].style.width = '';
-                }
+    if (tbl) {
+        for (var rowIndex = 0; rowIndex < tbl.rows.length; rowIndex++) {
+            var row = tbl.rows[rowIndex];
+            for (var cellIndex = 0; cellIndex < row.cells.length; cellIndex++) {
+                row.cells[cellIndex].children[0].style.width = '';
             }
-            tbl.style.width = '';
         }
+        tbl.style.width = '';
     }
-    /** @jsx React.DOM */
+}
+/** @jsx React.DOM */
 
 /* global module, require, React */
 
@@ -688,12 +684,31 @@ module.exports.PivotRow = react.createClass({
 var _paddingLeft = null;
 var _borderLeft = null;
 
+var interactionMap = {
+    'onHover': ['mouseenter', 'mouseleave']
+}
+
 module.exports.PivotCell = react.createClass({
     expand: function() {
         this.props.pivotTableComp.expandRow(this.props.cell);
     },
     collapse: function() {
         this.props.pivotTableComp.collapseRow(this.props.cell);
+    },
+    getCellInteractionEventNames: function() {
+        var pgrid = this.props.pivotTableComp.pgrid,
+            interactions = pgrid.getInteractions(this.props.cell.typeStr);
+
+        var names = [];
+        for (var key in interactions) {
+            var fn = interactions[key];
+            var eventNames = interactionMap[key];
+            for (var idx in eventNames) {
+                var evtName = eventNames[idx];
+                names.push([evtName, fn]);
+            }
+        }
+        return names;
     },
     updateCellInfos: function() {
         var node = this.getDOMNode();
@@ -744,8 +759,42 @@ module.exports.PivotCell = react.createClass({
             node.__orb._borderRightWidth = 0;
         }
     },
+    handleInteraction: function(fn) {
+        var cell = this.props.cell;
+
+        return function(evt) {
+            fn.bind(cell, evt);
+        }
+    },
     componentDidMount: function() {
         this.updateCellInfos();
+
+        // Support interactions
+        var pgrid = this.props.pivotTableComp.pgrid,
+            interactions = pgrid.getInteractions(this.props.cell.typeStr);
+
+        var el = this.getDOMNode();
+
+        if (interactions.onInit)
+            interactions.onInit.call(this, el, this.props.cell);
+
+        var interactionNames = this.getCellInteractionEventNames();
+
+
+        for (var evtIdx in interactionNames) {
+            var evt = interactionNames[evtIdx];
+            el.addEventListener(evt[0], this.handleInteraction(evt[1]), false);
+        }
+    },
+    componentWillUnmount: function() {
+        var el = this.getDOMNode();
+
+        // Remove interactions
+        var interactionNames = this.getCellInteractionEventNames();
+        for (var evtIdx in interactionNames) {
+            var evt = interactionNames[evtIdx];
+            el.removeEventListener(evt[0], this.handleInteraction(evt[1]), false);
+        }
     },
     componentDidUpdate: function() {
         this.updateCellInfos();
@@ -847,38 +896,38 @@ module.exports.PivotCell = react.createClass({
 });
 
 function getClassname(compProps) {
-        var cell = compProps.cell;
-        var classname = cell.cssclass;
-        var isEmpty = cell.template === 'cell-template-empty';
+    var cell = compProps.cell;
+    var classname = cell.cssclass;
+    var isEmpty = cell.template === 'cell-template-empty';
 
-        if (!cell.visible()) {
-            classname += ' cell-hidden';
-        }
-
-        if (cell.type === uiheaders.HeaderType.SUB_TOTAL && cell.expanded) {
-            classname += ' header-st-exp';
-        }
-
-        if (cell.type === uiheaders.HeaderType.GRAND_TOTAL) {
-            if (cell.dim.depth === 1) {
-                classname += ' header-nofields';
-            } else if (cell.dim.depth > 2) {
-                classname += ' header-gt-exp';
-            }
-        }
-
-        if (compProps.leftmost) {
-            classname += ' ' + (cell.template === 'cell-template-datavalue' ? 'cell' : 'header') + '-leftmost';
-        }
-
-        if (compProps.topmost) {
-            classname += ' cell-topmost';
-        }
-
-        return classname;
+    if (!cell.visible()) {
+        classname += ' cell-hidden';
     }
-    /* global module, require, react, reactUtils */
-    /*jshint eqnull: true*/
+
+    if (cell.type === uiheaders.HeaderType.SUB_TOTAL && cell.expanded) {
+        classname += ' header-st-exp';
+    }
+
+    if (cell.type === uiheaders.HeaderType.GRAND_TOTAL) {
+        if (cell.dim.depth === 1) {
+            classname += ' header-nofields';
+        } else if (cell.dim.depth > 2) {
+            classname += ' header-gt-exp';
+        }
+    }
+
+    if (compProps.leftmost) {
+        classname += ' ' + (cell.template === 'cell-template-datavalue' ? 'cell' : 'header') + '-leftmost';
+    }
+
+    if (compProps.topmost) {
+        classname += ' cell-topmost';
+    }
+
+    return classname;
+}
+/* global module, require, react, reactUtils */
+/*jshint eqnull: true*/
 
 'use strict';
 

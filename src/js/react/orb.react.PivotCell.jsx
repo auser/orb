@@ -8,12 +8,31 @@
 var _paddingLeft = null;
 var _borderLeft = null;
 
+var interactionMap = {
+  'onHover': ['mouseenter', 'mouseleave']
+}
+
 module.exports.PivotCell = react.createClass({
   expand: function() {
     this.props.pivotTableComp.expandRow(this.props.cell);
   },
   collapse: function() {
     this.props.pivotTableComp.collapseRow(this.props.cell);
+  },
+  getCellInteractionEventNames: function() {
+    var pgrid = this.props.pivotTableComp.pgrid,
+        interactions = pgrid.getInteractions(this.props.cell.typeStr);
+
+    var names = [];
+    for (var key in interactions) {
+      var fn = interactions[key];
+      var eventNames = interactionMap[key];
+      for (var idx in eventNames) {
+        var evtName = eventNames[idx];
+        names.push([evtName, fn]);
+      }
+    }
+    return names;
   },
   updateCellInfos: function() {
     var node = this.getDOMNode();
@@ -64,8 +83,42 @@ module.exports.PivotCell = react.createClass({
       node.__orb._borderRightWidth = 0;
     }
   },
+  handleInteraction: function(fn) {
+    var cell = this.props.cell;
+
+    return function(evt) {
+      fn.bind(cell, evt);
+    }
+  },
   componentDidMount: function() {
     this.updateCellInfos();
+
+    // Support interactions
+    var pgrid = this.props.pivotTableComp.pgrid,
+        interactions = pgrid.getInteractions(this.props.cell.typeStr);
+
+    var el = this.getDOMNode();
+
+    if (interactions.onInit)
+      interactions.onInit.call(this, el, this.props.cell);
+
+    var interactionNames = this.getCellInteractionEventNames();
+
+
+    for (var evtIdx in interactionNames) {
+      var evt = interactionNames[evtIdx];
+      el.addEventListener(evt[0], this.handleInteraction(evt[1]), false);
+    }
+  },
+  componentWillUnmount: function() {
+    var el = this.getDOMNode();
+
+    // Remove interactions
+    var interactionNames = this.getCellInteractionEventNames();
+    for (var evtIdx in interactionNames) {
+      var evt = interactionNames[evtIdx];
+      el.removeEventListener(evt[0], this.handleInteraction(evt[1]), false);
+    }
   },
   componentDidUpdate: function() {
     this.updateCellInfos();
