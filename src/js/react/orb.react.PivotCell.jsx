@@ -84,34 +84,34 @@ module.exports.PivotCell = react.createClass({
     }
   },
   handleInteraction: function(fn) {
-    var cell = this.props.cell;
-
     return function(evt) {
-      fn.bind(cell, evt);
-    }
+      fn.call(this, this.props.cell, evt);
+    }.bind(this);
   },
   componentDidMount: function() {
-    this.updateCellInfos();
-
     // Support interactions
     var pgrid = this.props.pivotTableComp.pgrid,
         interactions = pgrid.getInteractions(this.props.cell.typeStr);
 
-    var el = this.getDOMNode();
+    var el = this.refs.cell.getDOMNode();
+    var self = this;
 
     if (interactions.onInit)
-      interactions.onInit.call(this, el, this.props.cell);
+      setTimeout(function() {
+        interactions.onInit.call(self, el, self.props.cell);
+      });
 
     var interactionNames = this.getCellInteractionEventNames();
-
 
     for (var evtIdx in interactionNames) {
       var evt = interactionNames[evtIdx];
       el.addEventListener(evt[0], this.handleInteraction(evt[1]), false);
     }
+    
+    this.updateCellInfos();
   },
   componentWillUnmount: function() {
-    var el = this.getDOMNode();
+    var el = this.refs.cell.getDOMNode();
 
     // Remove interactions
     var interactionNames = this.getCellInteractionEventNames();
@@ -186,6 +186,7 @@ module.exports.PivotCell = react.createClass({
 
     return <td className={getClassname(this.props)}
                onDoubleClick={ cellClick }
+               ref={'cell'}
                colSpan={cell.hspan()}
                rowSpan={cell.vspan()}>
                 <div>
