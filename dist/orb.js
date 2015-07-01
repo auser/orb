@@ -626,8 +626,8 @@
                     return null;
                 };
 
-                this.getInteractions = function(cellType) {
-                    return config.interactions ? config.interactions[cellType] : {};
+                this.getElementOptions = function(cellType) {
+                    return config.elementOptions && config.elementOptions[cellType];
                 };
 
                 this.getPreFilters = function() {
@@ -1206,8 +1206,10 @@
                     refresh();
                 };
 
-                this.getInteractions = function(type) {
-                    return self.config.getInteractions(type) || {};
+                this.getElementOptions = function(type) {
+                    return self.config.getElementOptions(type) || {
+                        events: {}
+                    };
                 }
 
                 this.getFieldValues = function(field, filterFunc) {
@@ -3643,7 +3645,7 @@
             var _paddingLeft = null;
             var _borderLeft = null;
 
-            var interactionMap = {
+            var eventMap = {
                 'onHover': ['mouseenter', 'mouseleave']
             }
 
@@ -3656,12 +3658,13 @@
                 },
                 getCellInteractionEventNames: function() {
                     var pgrid = this.props.pivotTableComp.pgrid,
-                        interactions = pgrid.getInteractions(this.props.cell.typeStr);
+                        eleOptions = pgrid.getElementOptions(this.props.cell.typeStr),
+                        events = eleOptions ? eleOptions.events : {};
 
                     var names = [];
-                    for (var key in interactions) {
-                        var fn = interactions[key];
-                        var eventNames = interactionMap[key];
+                    for (var key in events) {
+                        var fn = events[key];
+                        var eventNames = eventMap[key];
                         for (var idx in eventNames) {
                             var evtName = eventNames[idx];
                             names.push([evtName, fn]);
@@ -3726,20 +3729,21 @@
                 componentDidMount: function() {
                     // Support interactions
                     var pgrid = this.props.pivotTableComp.pgrid,
-                        interactions = pgrid.getInteractions(this.props.cell.typeStr);
+                        eleOptions = pgrid.getElementOptions(this.props.cell.typeStr),
+                        events = eleOptions.events;
 
                     var el = this.refs.cell.getDOMNode();
                     var self = this;
 
-                    if (interactions.onInit)
+                    if (eleOptions.onInit)
                         setTimeout(function() {
-                            interactions.onInit.call(self, el, self.props.cell);
+                            eleOptions.onInit.call(self, el, self.props.cell);
                         });
 
-                    var interactionNames = this.getCellInteractionEventNames();
+                    var eventNames = this.getCellInteractionEventNames();
 
-                    for (var evtIdx in interactionNames) {
-                        var evt = interactionNames[evtIdx];
+                    for (var evtIdx in eventNames) {
+                        var evt = eventNames[evtIdx];
                         el.addEventListener(evt[0], this.handleInteraction(evt[1]), false);
                     }
 
@@ -3747,11 +3751,19 @@
                 },
                 componentWillUnmount: function() {
                     var el = this.refs.cell.getDOMNode();
+                    var self = this;
+                    var pgrid = this.props.pivotTableComp.pgrid,
+                        eleOptions = pgrid.getElementOptions(this.props.cell.typeStr);
+
+                    if (eleOptions.beforeDestroy)
+                        setTimeout(function() {
+                            eleOptions.beforeDestroy.call(self, el, self.props.cell);
+                        });
 
                     // Remove interactions
-                    var interactionNames = this.getCellInteractionEventNames();
-                    for (var evtIdx in interactionNames) {
-                        var evt = interactionNames[evtIdx];
+                    var eventNames = this.getCellInteractionEventNames();
+                    for (var evtIdx in eventNames) {
+                        var evt = eventNames[evtIdx];
                         el.removeEventListener(evt[0], this.handleInteraction(evt[1]), false);
                     }
                 },
@@ -3772,6 +3784,13 @@
                     var value;
                     var cellClick;
                     var headerPushed = false;
+                    var children;
+
+                    var pgrid = this.props.pivotTableComp.pgrid,
+                        eleOptions = pgrid.getElementOptions(this.props.cell.typeStr);
+
+                    if (eleOptions.children)
+                        children = eleOptions.children(cell);
 
                     this._latestVisibleState = cell.visible();
 
@@ -3849,7 +3868,8 @@
                             rowSpan: cell.vspan()
                         },
                         React.createElement("div", null,
-                            divcontent
+                            divcontent,
+                            children && children
                         )
                     );
                 }

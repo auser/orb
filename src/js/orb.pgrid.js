@@ -91,8 +91,8 @@ module.exports = function(config) {
         refresh();
     };
 
-    this.getInteractions = function(type) {
-        return self.config.getInteractions(type) || {};
+    this.getElementOptions = function(type) {
+        return self.config.getElementOptions(type) || {events: {}};
     }
 
     this.getFieldValues = function(field, filterFunc) {

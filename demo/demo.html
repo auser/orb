@@ -139,13 +139,18 @@
         rows    : [ 'Manufacturer'],//, 'Category' ],
         columns : [ 'Class', 'Category' ],
         data    : [ 'Quantity', 'Amount' ],
-        interactions: {
+        elementOptions: {
             dataValue: {
                 onInit: function(elem, cell) {
-                    console.log('onInit ->', elem, cell);
+                    // console.log('onInit ->', elem, cell);
                 },
-                onHover: function(cell, index) {
-                    // console.log('onHover ->', cell, index);
+                children: function() {
+                    return React.createElement("div", {className: 'BOB'});
+                },
+                events: {
+                    onHover: function(cell, index) {
+                        // console.log('onHover ->', cell, index);
+                    }
                 }
             }
         }

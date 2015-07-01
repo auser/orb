@@ -327,8 +327,8 @@ module.exports.config = function(config) {
         return null;
     };
 
-    this.getInteractions = function(cellType) {
-        return config.interactions ? config.interactions[cellType] : {};
+    this.getElementOptions = function(cellType) {
+        return config.elementOptions && config.elementOptions[cellType];
     };
 
     this.getPreFilters = function() {
