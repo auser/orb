@@ -3652,9 +3652,7 @@
             var customWrapper = react.createClass({
                 render: function() {
                     return (
-                        React.createElement("div", {
-                                className: "BOB"
-                            },
+                        React.createElement("div", null,
                             this.props.children
                         )
                     )
