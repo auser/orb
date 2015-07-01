@@ -12,6 +12,16 @@ var eventMap = {
   'onHover': ['mouseenter', 'mouseleave']
 }
 
+var customWrapper = react.createClass({
+  render: function() {
+    return (
+      <div>
+        {this.props.children}
+      </div>
+    )
+  }
+})
+
 module.exports.PivotCell = react.createClass({
   expand: function() {
     this.props.pivotTableComp.expandRow(this.props.cell);
@@ -148,12 +158,16 @@ module.exports.PivotCell = react.createClass({
     var cellClick;
     var headerPushed = false;
     var children;
+    var Wrapper = customWrapper;
 
     var pgrid       = this.props.pivotTableComp.pgrid,
         eleOptions  = pgrid.getElementOptions(this.props.cell.typeStr);
 
     if (eleOptions.children)
       children = eleOptions.children(cell);
+
+    if (eleOptions.wrapper)
+      Wrapper = eleOptions.wrapper(cell);
 
     this._latestVisibleState = cell.visible();
 
@@ -204,14 +218,17 @@ module.exports.PivotCell = react.createClass({
     if (children)
       divcontent.push(<div key="extra" ref="userChildren">{children}</div>)
 
+    if (!Wrapper)
+      Wrapper = React.createElement('div', {});
+
     return <td className={getClassname(this.props)}
                onDoubleClick={ cellClick }
                ref={'cell'}
                colSpan={cell.hspan()}
                rowSpan={cell.vspan()}>
-                <div>
+                <Wrapper>
                   {divcontent}
-                </div>
+                </Wrapper>
            </td>;
   }
 });

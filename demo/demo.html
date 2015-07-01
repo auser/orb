@@ -145,8 +145,17 @@
                     // console.log('onInit ->', elem, cell);
                 },
                 children: function() {
-                    return React.createElement("div", {className: 'BOB'});
+                    return React.createElement("div", {});
                 },
+                wrapper: function(cell) {
+                    return React.createClass({
+                        render: function() {
+                            return React.createElement('span', {
+                                className: 'aksdfjaksdjfkasjdf'
+                            }, this.props.children)
+                        }
+                    });
+                }, 
                 events: {
                     onHover: function(cell, index) {
                         // console.log('onHover ->', cell, index);
