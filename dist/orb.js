@@ -3860,6 +3860,12 @@
                         })));
                     }
 
+                    if (children)
+                        divcontent.push(React.createElement("div", {
+                            key: "extra",
+                            ref: "userChildren"
+                        }, children))
+
                     return React.createElement("td", {
                             className: getClassname(this.props),
                             onDoubleClick: cellClick,
@@ -3868,8 +3874,7 @@
                             rowSpan: cell.vspan()
                         },
                         React.createElement("div", null,
-                            divcontent,
-                            children && children
+                            divcontent
                         )
                     );
                 }

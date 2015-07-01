@@ -201,6 +201,9 @@ module.exports.PivotCell = react.createClass({
       divcontent.push(<div key="cell-value" ref="cellContent" className={headerClassName}><div dangerouslySetInnerHTML={{__html: value || '&#160;'}}></div></div>);
     }
 
+    if (children)
+      divcontent.push(<div key="extra" ref="userChildren">{children}</div>)
+
     return <td className={getClassname(this.props)}
                onDoubleClick={ cellClick }
                ref={'cell'}
@@ -208,7 +211,6 @@ module.exports.PivotCell = react.createClass({
                rowSpan={cell.vspan()}>
                 <div>
                   {divcontent}
-                  {children && children}
                 </div>
            </td>;
   }
