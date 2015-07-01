@@ -138,6 +138,9 @@ var Field = module.exports.field = function(options, createSubOptions) {
     // shared settings
     this.caption = options.caption || this.name;
 
+    // Key
+    this.key = options.key;
+
     // rows & columns settings
     this.sort = new SortConfig(options.sort);
     this.subTotal = new SubTotalConfig(options.subTotal);
