@@ -218,9 +218,6 @@ module.exports.PivotCell = react.createClass({
     if (children)
       divcontent.push(<div key="extra" ref="userChildren">{children}</div>)
 
-    if (!Wrapper)
-      Wrapper = React.createElement('div', {});
-
     return <td className={getClassname(this.props)}
                onDoubleClick={ cellClick }
                ref={'cell'}

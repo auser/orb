@@ -3880,9 +3880,6 @@
                             ref: "userChildren"
                         }, children))
 
-                    if (!Wrapper)
-                        Wrapper = React.createElement('div', {});
-
                     return React.createElement("td", {
                             className: getClassname(this.props),
                             onDoubleClick: cellClick,
