@@ -385,7 +385,7 @@
 
                 return new Field({
                     name: getpropertyvalue('name', merged.configs, ''),
-
+                    key: getpropertyvalue('key', merged.configs, ''),
                     caption: getpropertyvalue('caption', merged.configs, ''),
 
                     sort: {
