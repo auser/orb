@@ -155,7 +155,10 @@
                             }, this.props.children)
                         }
                     });
-                }, 
+                },
+                onUpdate: function(newProps) {
+                    console.log('onupdate, yo');
+                },
                 events: {
                     onHover: function(cell, index) {
                         // console.log('onHover ->', cell, index);

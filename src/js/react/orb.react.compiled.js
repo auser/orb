@@ -819,6 +819,12 @@ module.exports.PivotCell = react.createClass({
     componentDidUpdate: function() {
         this.updateCellInfos();
     },
+    componentWillUpdate: function(newProps) {
+        var pgrid = this.props.pivotTableComp.pgrid,
+            eleOptions = pgrid.getElementOptions(this.props.cell.typeStr);
+        if (eleOptions && eleOptions.onUpdate)
+            eleOptions.onUpdate(newProps);
+    },
     shouldComponentUpdate: function(nextProps, nextState) {
         if (nextProps.cell && nextProps.cell == this.props.cell && !this._latestVisibleState && !nextProps.cell.visible()) {
             return false;
